@@ -1,7 +1,10 @@
 #pragma once
 
 #include "JsonEntity.hpp"
+#include "Raw.hpp"
 #include "string.hpp"
+
+#include <iostream>
 
 namespace json
 {
@@ -13,13 +16,12 @@ namespace json
         std::string _data;
 
     public:
-        /// @brief Constructor from string
-        JsonValue(std::string raw);
-
         /// @brief Parameterized Constructor
         template <typename T>
         inline JsonValue(T t)
+            : JsonEntity(JsonEntity::value)
         {
+            std::cout << "No specialization called!(" << t << ")\n";
             std::ostringstream outStream;
             outStream << t;
             _data = outStream.str();
@@ -59,6 +61,7 @@ namespace json
             _data = outStream.str();
         }
         
+        [[deprecated]]
         /// @brief sets a given string as String. Same as set<std::string>("\"" + str + "\"")
         void setString(const std::string& str);
 
@@ -68,4 +71,30 @@ namespace json
         /// @brief [library internal] Returns true when the array does not contain any arrays or objects.
         bool _isBottomLayer() const override;
     };
+
+    template <>
+    inline JsonValue::JsonValue<std::string>(std::string str)
+        : JsonEntity(JsonEntity::value)
+    {
+        std::cout << "String specialization called!(" << str << ")\n";
+        _data = "\"" + str + "\"";
+    }
+    
+    template <>
+    inline JsonValue::JsonValue<Raw>(Raw raw)
+        : JsonEntity(JsonEntity::value)
+    {
+        std::cout << "Raw specialization called!(" << raw << ")\n";
+        _data = raw;
+    }
+
+    template <>
+    inline JsonValue::JsonValue<const char*>(const char* str)
+        : JsonValue(std::string(str))
+    {}
+    
+    template <>
+    inline JsonValue::JsonValue<char*>(char* str)
+        : JsonValue(std::string(str))
+    {}
 }

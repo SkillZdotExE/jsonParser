@@ -194,6 +194,18 @@ namespace json
 
         return ret.substr(1, ret.size() - 2);
     }
+    
+    template<>
+    inline void JsonArray::push_back<std::string>(std::string str)
+    {
+        _data.push_back(JsonEntity::makeNew("\"" + str + "\""));
+    }
+    
+    template <>
+    inline void JsonArray::insert<std::string>(size_t n, std::string str)
+    {
+        _data.insert(_data.begin() + n, JsonEntity::makeNew("\"" + str + "\""));
+    }
 
     void JsonArray::erase(size_t index)
     {

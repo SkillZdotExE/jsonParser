@@ -1,14 +1,9 @@
 #include "../inc/JsonValue.hpp"
 #include "../inc/string.hpp"
+#include "../inc/Raw.hpp"
 
 namespace json
 {
-    JsonValue::JsonValue(std::string str)
-        : JsonEntity(JsonEntityType::value)
-    {
-        fromString(str);
-    }
-
     void JsonValue::fromString(std::string raw)
     {
         _data = raw;
@@ -32,6 +27,18 @@ namespace json
     std::string JsonValue::toStringF(const JsonFormattingOptions &, size_t) const
     {
         return _data;
+    }
+    
+    template <>
+    inline void JsonValue::set<std::string>(const std::string& str)
+    {
+        _data = "\"" + str + "\"";
+    }
+    
+    template <>
+    inline void JsonValue::set<Raw>(const Raw& val)
+    {
+        _data = val;
     }
     
     void JsonValue::setString(const std::string& str)

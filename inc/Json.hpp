@@ -3,3 +3,4 @@
 #include "JsonArray.hpp"
 #include "JsonObject.hpp"
 #include "JsonValue.hpp"
+#include "Raw.hpp"

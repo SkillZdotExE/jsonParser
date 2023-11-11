@@ -6,11 +6,10 @@
 int main(void)
 {
   json::JsonObject jobj;
-  jobj.readFromFile("data/json1.json");
+  
+  jobj.insert("a", json::JsonValue(json::Raw("raw")));
+  jobj.insert("b", json::JsonValue("rawr"));
 
-  std::cout << jobj.get<int>("Deckung") << "\n";
-  std::cout << jobj.getString("Nummer") << "\n";
-  std::cout << jobj.getString("Deckung") << "\n";
 
   return EXIT_SUCCESS;
 }

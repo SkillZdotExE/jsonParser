@@ -39,6 +39,13 @@ namespace json
             entity.second = nullptr;
         }
     }
+    
+    template <>
+    inline void JsonObject::insert<std::string>(std::string key, std::string str)
+    {
+        remove(key);
+        _data.insert({key, JsonEntity::makeNew("\"" + str + "\"")});
+    }
 
     JsonObject &JsonObject::operator=(const JsonObject &other)
     {
