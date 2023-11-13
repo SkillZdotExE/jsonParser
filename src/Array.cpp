@@ -1,6 +1,7 @@
 #include "../inc/Array.hpp"
 #include "../inc/Object.hpp"
 #include "../inc/Value.hpp"
+#include "../inc/makeEntity.hpp"
 #include <iostream>
 #include <sstream>
 
@@ -29,7 +30,7 @@ namespace json
         _data.clear();
         for (const auto &entity : other._data)
         {
-            _data.push_back(JsonEntity::makeNew(entity->toString()));
+            _data.push_back(json::make(*entity));
         }
     }
 
@@ -58,7 +59,7 @@ namespace json
 
         for (const auto &entity : other._data)
         {
-            _data.push_back({JsonEntity::makeNew(entity->toString())});
+            _data.push_back({json::make(*entity)});
         }
         return *this;
     }
@@ -120,7 +121,7 @@ namespace json
                 if (!bracketsLevel)
                 {
                     if (tokenStartIndex != currentIndex + 1)
-                        _data.push_back(JsonEntity::makeNew(raw.substr(tokenStartIndex, currentIndex - tokenStartIndex - 1)));
+                        _data.push_back(json::make(raw.substr(tokenStartIndex, currentIndex - tokenStartIndex - 1)));
                     return;
                 }
                 if (!inQuote)
@@ -130,7 +131,7 @@ namespace json
                 if (!inQuote && bracesLevel == 0 && bracketsLevel == 0)
                 {
                     if (tokenStartIndex != currentIndex)
-                        _data.push_back(JsonEntity::makeNew(raw.substr(tokenStartIndex, currentIndex - tokenStartIndex)));
+                        _data.push_back(json::make(raw.substr(tokenStartIndex, currentIndex - tokenStartIndex)));
                     tokenStartIndex = currentIndex + 1;
                 }
             }
@@ -208,8 +209,17 @@ namespace json
 
     void Array::insert(size_t n, const Value &value)
     {
-        std::cout << "[Copy Value] " << __PRETTY_FUNCTION__ << "\n";
         _data.insert(_data.begin() + n, new Value(value));
+    }
+    
+    void Array::insert(size_t n, const Array &value)
+    {
+        _data.insert(_data.begin() + n, new Array(value));
+    }
+
+    void Array::insert(size_t n, const Object &value)
+    {
+        _data.insert(_data.begin() + n, new Object(value));
     }
 
     void Array::insert(size_t n, const Raw &value)

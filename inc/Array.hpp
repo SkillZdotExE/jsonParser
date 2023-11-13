@@ -1,6 +1,7 @@
 #pragma once
 
 #include "JsonEntity.hpp"
+#include "makeEntity.hpp"
 #include "string.hpp"
 #include "Raw.hpp"
 #include <vector>
@@ -106,13 +107,14 @@ namespace json
         template <typename T>
         inline void insert(size_t n, const T &value)
         {
-            std::cout << "[Default construction] " << __PRETTY_FUNCTION__ << "\n";
-            std::ostringstream outStream;
-            outStream << value;
-            _data.insert(_data.begin() + n, JsonEntity::makeNew(outStream.str()));
+            _data.insert(_data.begin() + n, json::make(value));
         }
 
         void insert(size_t n, const Value &value);
+
+        void insert(size_t n, const Array &value);
+
+        void insert(size_t n, const Object &value);
 
         void insert(size_t n, const Raw &value);
 

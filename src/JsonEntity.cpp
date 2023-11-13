@@ -20,25 +20,6 @@ namespace json
     {
     }
 
-    JsonEntity *JsonEntity::makeNew(std::string raw)
-    {
-        strn::trim(raw);
-        if (raw.size() >= 2 && *raw.begin() == '{' && *(raw.end() - 1) == '}')
-        {
-            return new Object(raw);
-        }
-        else if (raw.size() >= 2 && *raw.begin() == '[' && *(raw.end() - 1) == ']')
-        {
-            auto ret = new Array();
-            ret->fromString(raw);
-            return ret;
-        }
-        else
-        {
-            return new Value(raw);
-        }
-    }
-
     JsonEntity::~JsonEntity()
     {
     }

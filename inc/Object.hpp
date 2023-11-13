@@ -1,5 +1,6 @@
 #pragma once
 #include "JsonEntity.hpp"
+#include "makeEntity.hpp"
 #include "Raw.hpp"
 #include "string.hpp"
 #include <sstream>
@@ -35,14 +36,16 @@ namespace json
         inline void insert(const std::string &key, const T &value)
         {
             remove(key);
-            std::ostringstream outStream;
-            outStream << value;
-            _data.insert({key, JsonEntity::makeNew(outStream.str())});
+            _data.insert({key, json::make(value)});
         }
 
         void insert(const std::string &key, const Raw &value);
 
         void insert(const std::string &key, const Value &value);
+
+        void insert(const std::string &key, const Array &value);
+
+        void insert(const std::string &key, const Object &value);
 
         /// @brief Constructor from individual key-value pairs
         template <typename T1, typename... Ts>

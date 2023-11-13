@@ -9,6 +9,7 @@
 * setup gh-pages with doxygen
 * Iterators for JsonArray and JsonObject?
 * Remove necessity to write string values as "\\"value\\"" (instead as "value")
+* Look for memory leaks
 
 * Object.clear()
 

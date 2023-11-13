@@ -2,6 +2,7 @@
 #include "../inc/Array.hpp"
 #include "../inc/Value.hpp"
 #include "../inc/string.hpp"
+#include "../inc/makeEntity.hpp"
 #include <iostream>
 #include <sstream>
 #include <fstream>
@@ -25,7 +26,7 @@ namespace json
         _data.clear();
         for (const auto &entity : other._data)
         {
-            _data.insert({entity.first, JsonEntity::makeNew(entity.second->toString())});
+            _data.insert({entity.first, json::make(*entity.second)});
         }
     }
 
@@ -52,6 +53,20 @@ namespace json
         _data.insert({key, new Value(value)});
     }
 
+    void Object::insert(const std::string &key, const Array &value)
+    {
+        remove(key);
+        std::cout << "Before copy: " << value << "\n";
+        std::cout << "After copy: " << Array(value) << "\n";
+        _data.insert({key, new Array(value)});
+    }
+
+    void Object::insert(const std::string &key, const Object &value)
+    {
+        remove(key);
+        _data.insert({key, new Object(value)});
+    }
+
     Object &Object::operator=(const Object &other)
     {
         if (this == &other)
@@ -66,7 +81,7 @@ namespace json
 
         for (const auto &entity : other._data)
         {
-            _data.insert({entity.first, JsonEntity::makeNew(entity.second->toString())});
+            _data.insert({entity.first, json::make(*entity.second)});
         }
         return *this;
     }
@@ -153,7 +168,7 @@ namespace json
             case ',':
                 if (inColonComma && !inQuote && bracesLevel == 0 && bracketsLevel == 0)
                 {
-                    keyValPair.second = JsonEntity::makeNew(raw.substr(tokenStartIndex, currentIndex - tokenStartIndex));
+                    keyValPair.second = json::make(raw.substr(tokenStartIndex, currentIndex - tokenStartIndex));
                     _data.insert(keyValPair);
                     inColonComma = false;
                 }
@@ -165,7 +180,7 @@ namespace json
 
         if (inColonComma)
         {
-            keyValPair.second = JsonEntity::makeNew(raw.substr(tokenStartIndex, currentIndex - tokenStartIndex));
+            keyValPair.second = json::make(raw.substr(tokenStartIndex, currentIndex - tokenStartIndex));
             _data.insert(keyValPair);
         }
     }

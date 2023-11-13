@@ -64,9 +64,6 @@ namespace json
             object
         } type;
 
-        /// @brief Creates a new Object, Array or Value and returns a pointer to it.
-        [[nodiscard]] static JsonEntity *makeNew(std::string raw);
-
         /// @brief Parameterized Constructor
         JsonEntity(JsonEntityType type_);
 
