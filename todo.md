@@ -10,4 +10,6 @@
 * Iterators for JsonArray and JsonObject?
 * Remove necessity to write string values as "\\"value\\"" (instead as "value")
 
+* Object.clear()
+
 # Discarded for now

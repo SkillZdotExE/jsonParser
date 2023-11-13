@@ -2,15 +2,17 @@
 
 #include "JsonEntity.hpp"
 #include "string.hpp"
+#include "Raw.hpp"
 #include <vector>
+#include <iostream>
 
 namespace json
 {
-    class JsonObject;
-    class JsonValue;
+    class Object;
+    class Value;
 
     /// @brief Represents a JSON-array
-    class JsonArray : public JsonEntity
+    class Array : public JsonEntity
     {
     private:
         std::vector<JsonEntity *> _data;
@@ -28,56 +30,59 @@ namespace json
 
     public:
         /// @brief Default-Constructor
-        JsonArray();
+        Array();
 
         /// @brief Copy-Constructor
-        JsonArray(const JsonArray &other);
+        Array(const Array &other);
+
+        /// @brief Constructor from raw string
+        /// @param raw
+        Array(const std::string &raw);
+        Array(const char *raw);
 
         /// @brief Constructor from individual elements
         template <typename T, typename... Ts>
-        JsonArray(T t, Ts... ts)
-            : JsonArray()
+        Array(const T &t, const Ts &...ts)
+            : Array()
         {
             _data.reserve(sizeof...(Ts) + 1);
             _initialize(t, ts...);
         }
 
         /// @brief Move-Constructor
-        JsonArray(JsonArray &&other);
+        Array(Array &&other);
 
         /// @brief Copy-Assignment operator
-        JsonArray &operator=(const JsonArray &other);
+        Array &operator=(const Array &other);
 
         /// @brief Move-Assignment operator
-        JsonArray &operator=(JsonArray &&other);
+        Array &operator=(Array &&other);
 
-        /// @brief Set the JSON-string the array represents
-        void fromString(std::string raw) override;
-        /// @brief Get the JSON-String the array represents
+        /// @brief Changes the JSON-string the array represents
+        void fromString(const std::string &raw) override;
+
+        /// @brief Retrieves the JSON-String the array represents
         /// @note Use toStringF() for a formatted and more readable JSON-String
         [[nodiscard]] std::string toString() const override;
 
         /// @brief Returns a formatted string.
         /// @param tabs  Indendation of all lines. Usually Zero.
         /// @param options Formatting options.
-        [[nodiscard]] std::string toStringF(const JsonFormattingOptions &options = defaultJsonFormattingOptions, size_t tabs = 0) const override;
+        [[nodiscard]] std::string toStringF(const FormattingOptions &options = defaultJsonFormattingOptions, size_t tabs = 0) const override;
 
-        /// @brief Returns the nth entity in the array as an array. Throws a std::runtime_error if the nth entity is not an of another type.
-        [[nodiscard]] JsonArray &A(size_t index);
+        /// @brief Returns the nth entity in the array as an array. Throws a std::runtime_error if the nth entity is of another type.
+        [[nodiscard]] Array &A(size_t index);
 
-        /// @brief Returns the nth entity in the array as an object. Throws a std::runtime_error if the nth entity is not an of another type.
-        [[nodiscard]] JsonObject &O(size_t index);
+        /// @brief Returns the nth entity in the array as an object. Throws a std::runtime_error if the nth entity is of another type.
+        [[nodiscard]] Object &O(size_t index);
 
-        /// @brief Returns the nth entity in the array as a value. Throws a std::runtime_error if the nth entity is not an of another type.
-        [[nodiscard]] JsonValue &V(size_t index);
+        /// @brief Returns the nth entity in the array as a value. Throws a std::runtime_error if the nth entity is of another type.
+        [[nodiscard]] Value &V(size_t index);
 
-        /// @brief Returns the nth entity in the array as a compact string.
-        [[nodiscard]] std::string S(size_t index) const;
-
-        /// @brief Returns whether a value exists and is equal to "true" or not
+        /// @brief Returns whether a value exists, is a bool and is true
         [[nodiscard]] bool getBool(size_t index) const;
 
-        /// @brief Returns the value at key or an empty string if key doesnt exist or is no string
+        /// @brief Returns the value at key or an empty string if key doesnt exist or is not a string
         [[nodiscard]] std::string getString(size_t index) const;
 
         /// @brief Gets the nth entity in the array.
@@ -92,26 +97,32 @@ namespace json
 
         /// @brief Adds an entity to the back of the array
         template <typename T>
-        inline void push_back(T value)
+        inline void push_back(const T &value)
         {
-            std::ostringstream outStream;
-            outStream << value;
-            _data.push_back(JsonEntity::makeNew(outStream.str()));
+            insert(_data.size(), value);
         }
 
         /// @brief Inserts an entity at the index n
         template <typename T>
-        inline void insert(size_t n, T val)
+        inline void insert(size_t n, const T &value)
         {
+            std::cout << "[Default construction] " << __PRETTY_FUNCTION__ << "\n";
             std::ostringstream outStream;
-            outStream << val;
+            outStream << value;
             _data.insert(_data.begin() + n, JsonEntity::makeNew(outStream.str()));
         }
+
+        void insert(size_t n, const Value &value);
+
+        void insert(size_t n, const Raw &value);
+
+        /// @brief Clears the entire array
+        void clear();
 
         /// @brief Erases an entity at the given index
         void erase(size_t index);
 
-        /// @brief Erases entities between start and end - 1 (inclusive)
+        /// @brief Erases entities int the range [start; end)
         void erase(size_t start, size_t end);
 
         /// @brief Returns the type of the nth entity in the array.
@@ -119,12 +130,17 @@ namespace json
         [[nodiscard]] std::string getType(size_t index) const;
 
         /// @brief Returns the number of entities in the array
-        [[nodiscard]] size_t size() const override;
-
-        /// @brief [library internal] Returns true when the array does not contain any arrays or objects.
-        [[nodiscard]] bool _isBottomLayer() const override;
+        [[nodiscard]] size_t size() const;
 
         /// @brief Deconstructor
-        ~JsonArray();
+        ~Array();
+
+    private:
+        /// @brief [library internal] Returns true if the array does not contain any arrays or objects.
+        [[nodiscard]] bool _isBottomLayer() const override;
+
+        friend JsonEntity;
+        friend Object;
+        friend Value;
     };
 }

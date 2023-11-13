@@ -1,19 +1,30 @@
-#include "../inc/JsonArray.hpp"
-#include "../inc/JsonObject.hpp"
-#include "../inc/JsonValue.hpp"
+#include "../inc/Array.hpp"
+#include "../inc/Object.hpp"
+#include "../inc/Value.hpp"
 #include <iostream>
 #include <sstream>
 
 namespace json
 {
 
-    JsonArray::JsonArray()
+    Array::Array()
         : JsonEntity(JsonEntityType::array)
     {
     }
 
-    JsonArray::JsonArray(const JsonArray &other)
-        : JsonArray()
+    Array::Array(const std::string &raw)
+        : Array()
+    {
+        fromString(raw);
+    }
+
+    Array::Array(const char *raw)
+        : Array(std::string(raw))
+    {
+    }
+
+    Array::Array(const Array &other)
+        : Array()
     {
         _data.clear();
         for (const auto &entity : other._data)
@@ -22,8 +33,8 @@ namespace json
         }
     }
 
-    JsonArray::JsonArray(JsonArray &&other)
-        : JsonArray()
+    Array::Array(Array &&other)
+        : Array()
     {
         _data.clear();
         for (auto &entity : other._data)
@@ -33,7 +44,7 @@ namespace json
         }
     }
 
-    JsonArray &JsonArray::operator=(const JsonArray &other)
+    Array &Array::operator=(const Array &other)
     {
         if (this == &other)
             return *this;
@@ -52,7 +63,7 @@ namespace json
         return *this;
     }
 
-    JsonArray &JsonArray::operator=(JsonArray &&other)
+    Array &Array::operator=(Array &&other)
     {
         for (auto &entity : _data)
         {
@@ -68,8 +79,11 @@ namespace json
         return *this;
     }
 
-    void JsonArray::fromString(std::string raw)
+    void Array::fromString(const std::string &raw)
     {
+        clear();
+        if (raw.size() >= 2)
+            return;
         size_t currentIndex = 1,
                tokenStartIndex = 1;
         uint16_t bracesLevel = 0,
@@ -103,13 +117,20 @@ namespace json
                     bracketsLevel++;
                 break;
             case ']':
+                if (!bracketsLevel)
+                {
+                    if (tokenStartIndex != currentIndex + 1)
+                        _data.push_back(JsonEntity::makeNew(raw.substr(tokenStartIndex, currentIndex - tokenStartIndex - 1)));
+                    return;
+                }
                 if (!inQuote)
                     bracketsLevel--;
                 break;
             case ',':
                 if (!inQuote && bracesLevel == 0 && bracketsLevel == 0)
                 {
-                    _data.push_back(JsonEntity::makeNew(raw.substr(tokenStartIndex, currentIndex - tokenStartIndex)));
+                    if (tokenStartIndex != currentIndex)
+                        _data.push_back(JsonEntity::makeNew(raw.substr(tokenStartIndex, currentIndex - tokenStartIndex)));
                     tokenStartIndex = currentIndex + 1;
                 }
             }
@@ -117,10 +138,9 @@ namespace json
             if (resetBackslash)
                 backslash = false;
         }
-        _data.push_back(JsonEntity::makeNew(raw.substr(tokenStartIndex, currentIndex - tokenStartIndex - 1)));
     }
 
-    std::string JsonArray::toString() const
+    std::string Array::toString() const
     {
         std::ostringstream outStream;
 
@@ -140,51 +160,42 @@ namespace json
         return outStream.str();
     }
 
-    JsonArray &JsonArray::A(size_t index)
+    Array &Array::A(size_t index)
     {
         if (_data.size() <= index)
             throw std::out_of_range("JsonArray::A: index " + std::to_string(index) + " is out of bounds");
-        if (_data[index]->_getType() != JsonEntityType::array)
+        if (_data[index]->type != JsonEntityType::array)
             throw std::runtime_error("JsonArray::A: Element " + std::to_string(index) + " is not of type array");
-        return dynamic_cast<JsonArray &>(*_data[index]);
+        return dynamic_cast<Array &>(*_data[index]);
     }
 
-    JsonObject &JsonArray::O(size_t index)
+    Object &Array::O(size_t index)
     {
         if (_data.size() <= index)
             throw std::out_of_range("JsonArray::O: index " + std::to_string(index) + " is out of bounds");
-        if (_data[index]->_getType() != JsonEntityType::object)
+        if (_data[index]->type != JsonEntityType::object)
             throw std::runtime_error("JsonArray::O: Element " + std::to_string(index) + " is not of type object");
-        return dynamic_cast<JsonObject &>(*_data[index]);
+        return dynamic_cast<Object &>(*_data[index]);
     }
 
-    JsonValue &JsonArray::V(size_t index)
+    Value &Array::V(size_t index)
     {
         if (_data.size() <= index)
             throw std::out_of_range("JsonArray::V: index " + std::to_string(index) + " is out of bounds");
-        if (_data[index]->_getType() != JsonEntityType::value)
+        if (_data[index]->type != JsonEntityType::value)
             throw std::runtime_error("JsonArray::V: Element " + std::to_string(index) + " is not of type value");
-        return dynamic_cast<JsonValue &>(*_data[index]);
+        return dynamic_cast<Value &>(*_data[index]);
     }
 
-    std::string JsonArray::S(size_t index) const
+    bool Array::getBool(size_t index) const
     {
-        if (_data.size() <= index)
-            throw std::out_of_range("JsonArray::S: index " + std::to_string(index) + " is out of bounds");
-        if (_data.at(index)->_getType() != JsonEntityType::value)
-            throw std::runtime_error("JsonArray::S: Element " + std::to_string(index) + " is not of type string");
-        return _data.at(index)->toString();
+        return _data.size() >= index && _data.at(index)->type == JsonEntityType::value && _data.at(index)->toString() == "true";
     }
 
-    bool JsonArray::getBool(size_t index) const
-    {
-        return _data.size() >= index && _data.at(index)->_getType() == JsonEntityType::value && _data.at(index)->toString() == "true";
-    }
-
-    std::string JsonArray::getString(size_t index) const
+    std::string Array::getString(size_t index) const
     {
         std::string ret;
-        if (_data.size() > index && _data.at(index)->_getType() == JsonEntityType::value)
+        if (_data.size() > index && _data.at(index)->type == JsonEntityType::value)
             ret = _data.at(index)->toString();
         else
             return std::string();
@@ -194,35 +205,39 @@ namespace json
 
         return ret.substr(1, ret.size() - 2);
     }
-    
-    template<>
-    inline void JsonArray::push_back<std::string>(std::string str)
+
+    void Array::insert(size_t n, const Value &value)
     {
-        _data.push_back(JsonEntity::makeNew("\"" + str + "\""));
-    }
-    
-    template <>
-    inline void JsonArray::insert<std::string>(size_t n, std::string str)
-    {
-        _data.insert(_data.begin() + n, JsonEntity::makeNew("\"" + str + "\""));
+        std::cout << "[Copy Value] " << __PRETTY_FUNCTION__ << "\n";
+        _data.insert(_data.begin() + n, new Value(value));
     }
 
-    void JsonArray::erase(size_t index)
+    void Array::insert(size_t n, const Raw &value)
+    {
+        _data.insert(_data.begin() + n, new Value(value));
+    }
+
+    void Array::clear()
+    {
+        _data.clear();
+    }
+
+    void Array::erase(size_t index)
     {
         _data.erase(_data.begin() + index);
     }
 
-    void JsonArray::erase(size_t start, size_t end)
+    void Array::erase(size_t start, size_t end)
     {
         _data.erase(_data.begin() + start, _data.begin() + end);
     }
 
-    std::string JsonArray::getType(size_t index) const
+    std::string Array::getType(size_t index) const
     {
         if (_data.size() <= index)
             throw std::out_of_range("JsonArray::getType index " + std::to_string(index) + " is out of bounds");
 
-        switch (_data[index]->_getType())
+        switch (_data[index]->type)
         {
         case JsonEntityType::array:
             return "array";
@@ -234,22 +249,20 @@ namespace json
         return "invalid type";
     }
 
-    size_t JsonArray::size() const
+    size_t Array::size() const
     {
         return _data.size();
     }
 
-    bool JsonArray::_isBottomLayer() const
+    bool Array::_isBottomLayer() const
     {
         for (const auto &entity : _data)
-        {
-            if (entity->_getType() == JsonEntityType::object || entity->_getType() == JsonEntityType::array)
+            if (entity->type == JsonEntityType::object || entity->type == JsonEntityType::array)
                 return false;
-        }
         return true;
     }
 
-    std::string JsonArray::toStringF(const JsonFormattingOptions &options, size_t tabs) const
+    std::string Array::toStringF(const FormattingOptions &options, size_t tabs) const
     {
         if (options.forceCompact)
             return toString();
@@ -278,7 +291,7 @@ namespace json
             if (!isInline)
                 outStream << options._getTab(tabs);
 
-            if (!isInline && options.firstBracketInNewline && entity->_getType() != JsonEntityType::value && entity->_getType() != JsonEntityType::array)
+            if (!isInline && options.firstBracketInNewline && entity->type != JsonEntityType::value && entity->type != JsonEntityType::array)
                 outStream << '\n'
                           << options._getTab(tabs);
             outStream << entity->toStringF(options, tabs);
@@ -304,7 +317,7 @@ namespace json
         return outStream.str();
     }
 
-    JsonArray::~JsonArray()
+    Array::~Array()
     {
         for (const auto &entity : _data)
         {

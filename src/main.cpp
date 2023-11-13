@@ -5,11 +5,10 @@
 
 int main(void)
 {
-  json::JsonObject jobj;
-  
-  jobj.insert("a", json::JsonValue(json::Raw("raw")));
-  jobj.insert("b", json::JsonValue("rawr"));
+  json::Object jobj;
 
+  jobj.insert("a", json::Value(json::Raw("raw")));
+  jobj.insert("b", json::Value("rawr"));
 
   return EXIT_SUCCESS;
 }

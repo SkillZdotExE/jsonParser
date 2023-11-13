@@ -1,6 +1,6 @@
 #pragma once
 #include "JsonEntity.hpp"
-#include "JsonArray.hpp"
-#include "JsonObject.hpp"
-#include "JsonValue.hpp"
+#include "Array.hpp"
+#include "Object.hpp"
+#include "Value.hpp"
 #include "Raw.hpp"

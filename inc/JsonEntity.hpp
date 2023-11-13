@@ -5,8 +5,8 @@
 
 namespace json
 {
-    /// @brief Options to control the formatting of generated JSON-string
-    struct JsonFormattingOptions
+    /// @brief Options to control the formatting of generated JSON-strings
+    struct FormattingOptions
     {
         /// @brief Sets the first Bracket of Objects and Arrays to be in the next line, at the same indentation as the key
         bool firstBracketInNewline = false;
@@ -22,17 +22,21 @@ namespace json
         bool spaceBeforeColon = false;
         /// @brief Whether to put a space after colons in objects
         bool spaceAfterColon = true;
-        /// @brief Whether to put a space after colons in arrays when inlining
+        /// @brief Whether to put a space after commas in inline arrays
         bool spaceAfterComma = true;
         /// @brief Whether to put a space after opening and before closing brackets
         bool spaceAfterOpeningBeforeClosingBrackets = true;
         /// @brief Forces the entire output to be inline
         bool forceInline = false;
-        /// @brief Keeps the output as compact as possible (essentially the same as calling toString() instead of toStringF())
+        /// @brief Keeps the output as compact as possible. Overwrites all other options.
         bool forceCompact = false;
-        /// @brief How many spaces to use as a tab. Set to 0 to instead use a '\\t'
+        /// @brief How many spaces to use as a tab. Set to 0 to instead use a tab character.
         uint8_t tabSpaces = 4;
 
+        // /// @brief Returns a example JSON-string to showcase the format
+        // [[nodiscard]] std::string getFormattingExample() const;
+
+    private:
         /// @brief [library internal] Returns a string representing the indentation
         [[nodiscard]] inline std::string _getTab(uint8_t tabs) const
         {
@@ -42,55 +46,52 @@ namespace json
             return ret;
         }
 
-        /// @brief Returns a example JSON-string to showcase the format
-        [[nodiscard]] std::string getFormattingExample() const;
+        friend class JsonEntity;
+        friend class Array;
+        friend class Object;
+        friend class Value;
     };
 
-    extern JsonFormattingOptions defaultJsonFormattingOptions;
+    extern const FormattingOptions defaultJsonFormattingOptions;
 
-    /// @brief Base class for all Json-entities
+    /// @brief Base class for all JSON-entities
     class JsonEntity
     {
-    protected:
-        enum JsonEntityType : uint8_t
-        {
+    public:
+        const enum JsonEntityType : uint8_t {
             value,
             array,
             object
         } type;
 
-    public:
-        /// @brief [Library internal] Creates a new Json-entity and returns a pointer to it.
+        /// @brief Creates a new Object, Array or Value and returns a pointer to it.
         [[nodiscard]] static JsonEntity *makeNew(std::string raw);
 
         /// @brief Parameterized Constructor
         JsonEntity(JsonEntityType type_);
 
         /// @brief Set the JSON-string the object represents
-        virtual void fromString(std::string raw) = 0;
+        virtual void fromString(const std::string &raw) = 0;
 
         /// @brief Get the JSON-string the object represents
         [[nodiscard]] virtual std::string toString() const = 0;
 
         /// @brief Returns a formatted string.
-        /// @param tabs Indendation of all lines. Usually Zero.
         /// @param options Formatting options.
-        [[nodiscard]] virtual std::string toStringF(const JsonFormattingOptions &options = defaultJsonFormattingOptions, size_t tabs = 0) const = 0;
-
-        [[nodiscard]] virtual size_t size() const;
-
-        /// @brief [library internal] Returns the type of the Json-entity
-        [[nodiscard]] JsonEntity::JsonEntityType _getType() const;
-
-        /// @brief [library internal] Returns true when the array does not contain any arrays or objects.
-        [[nodiscard]] virtual bool _isBottomLayer() const = 0;
+        /// @param tabs Indendation of all lines. Usually Zero.
+        [[nodiscard]] virtual std::string toStringF(const FormattingOptions &options = defaultJsonFormattingOptions, size_t tabs = 0) const = 0;
 
         /// @brief Deconstructor
         virtual ~JsonEntity();
-    };
 
-    [[deprecated( "Not yet implemented, always false!" )]]	
-    bool isValidJson(std::string json);
+    protected:
+        /// @brief [library internal] Returns true if the entity does not contain any arrays or objects.
+        [[nodiscard]] virtual bool _isBottomLayer() const = 0;
+
+        friend class Array;
+        friend class Object;
+        friend class Value;
+    };
 }
 
 std::ostream &operator<<(std::ostream &os, const json::JsonEntity &entity);
